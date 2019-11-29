@@ -1,0 +1,5 @@
+docker_ACR_url = "terraformdockertest.azurecr.io"
+docker_ACR_username= "terraformdockertest"
+ACR_Repo_path="DOCKER|terraformdockertest.azurecr.io/sonarrepo:122"
+docker_ACR_password = "ytAx9eq=hVH7trjiZUH6SY16HdohshXW"
+prefix = "TESTaimle2019"
