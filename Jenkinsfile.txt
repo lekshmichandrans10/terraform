@@ -1,53 +1,47 @@
-pipeline {
-    agent any
 
-    environment {
-        ARM_CLIENT_ID= '5543e845-53f7-4b8f-993e-ed845a57ae6a'
-        ARM_CLIENT_SECRET = '1aOygOYJ9f5A8?DQXpHzQMa/Bj]bGlH'
-        ARM_TENANT_ID = '6e06e42d-6925-47c6-b9e7-9581c7ca302a'
-        ARM_SUBSCRIPTION_ID = '1d021829-09c2-47de-9160-f9597e6f66ad'
-        TF_IN_AUTOMATION      = '1'
+        pipeline {
+
+  agent any
+
+  environment {
+    SVC_ACCOUNT_KEY = credentials('SP_terratest')
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+        sh 'mkdir -p creds' 
+        sh 'echo $SVC_ACCOUNT_KEY'
+      }
     }
 
-    stages {
-        stage('Plan') {
-            steps {
-                script {
-                    currentBuild.displayName = "${version}"
-                }
-                sh 'terraform init -input=false'
-                sh 'terraform workspace select ${environment}'
-                sh "terraform plan -input=false -out tfplan -var 'version=${version}' --var-file=environments/${environment}.tfvars"
-                sh 'terraform show -no-color tfplan > tfplan.txt'
-            }
+    stage('TF Plan') {
+      steps {
+        container('terraform') {
+          sh 'terraform init'
+          sh 'terraform plan -out myplan'
         }
-
-        stage('Approval') {
-            when {
-                not {
-                    equals expected: true, actual: params.autoApprove
-                }
-            }
-
-            steps {
-                script {
-                    def plan = readFile 'tfplan.txt'
-                    input message: "Do you want to apply the plan?",
-                        parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
-                }
-            }
-        }
-
-        stage('Apply') {
-            steps {
-                sh "terraform apply -input=false tfplan"
-            }
-        }
+      }      
     }
 
-    post {
-        always {
-            archiveArtifacts artifacts: 'tfplan.txt'
+    stage('Approval') {
+      steps {
+        script {
+          def userInput = input(id: 'confirm', message: 'Apply Terraform?', parameters: [ [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm'] ])
         }
+      }
     }
+
+    stage('TF Apply') {
+      steps {
+        container('terraform') {
+          sh 'terraform apply -input=false myplan'
+        }
+      }
+    }
+
+  } 
+
 }
