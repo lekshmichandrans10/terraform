@@ -1,10 +1,15 @@
 #!/usr/bin/env groovy
 pipeline {
 
-  agent any
-
+  agent {
+        node {
+            label 'master'
+            }
+    environment {
+        TERRAFORM_CMD = 'docker run --network host " -w /app -v ${HOME}/.aws:/root/.aws -v ${HOME}/.ssh:/root/.ssh -v `pwd`:/app hashicorp/terraform:light'
+                }
   
-
+        }
   stages {
 
     stage('Checkout') {
@@ -15,42 +20,43 @@ pipeline {
         checkout scm
         
       }
+	  }
+      stage('pull latest light terraform image') {
+            steps {
+                sh  """
+                    docker pull hashicorp/terraform:light
+                    """
+            }
     }
 
-    stage('TF Plan') {
-      steps {
-        withCredentials([azureServicePrincipal('SP_terratest')]) {
-  sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-         }
-        container('terraform') {
-          sh 'terraform init'
-          sh 'terraform plan -out myplan'
+    stage('init') {
+            steps {
+                sh  """
+                    ${TERRAFORM_CMD} init -backend=true -input=false
+                    """
+            }
         }
-      }      
-    }
+        stage('plan') {
+            steps {{
+                sh  """
+                    ${TERRAFORM_CMD} plan -out=tfplan -input=false 
+                    """
+                script {
+                  timeout(time: 10, unit: 'MINUTES') {
+                    input(id: "Deploy Gate", message: "Deploy ${params.project_name}?", ok: 'Deploy')
+                  }
+                }
+                    }      
+                      }
 
-    stage('Approval') {
-      steps {
-        withCredentials([azureServicePrincipal('SP_terratest')]) {
-  sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-         }
-        script {
-          def userInput = input(id: 'confirm', message: 'Apply Terraform?', parameters: [ [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm'] ])
-        }
-      }
-    }
-
-    stage('TF Apply') {
-      steps {
-        withCredentials([azureServicePrincipal('SP_terratest')]) {
-  sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-         }
-        container('terraform') {
-          sh 'terraform apply -input=false myplan'
-        }
-      }
-    }
-
-  } 
-
+                       }
+        
+        stage('apply') {
+            steps {
+                sh  """
+                    ${TERRAFORM_CMD} apply -lock=false -input=false tfplan
+                    """
+                 }
+                       }
+}
 }
