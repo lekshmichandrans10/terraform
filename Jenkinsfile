@@ -1,12 +1,7 @@
 #!/usr/bin/env groovy
 pipeline {
 
-  agent any
-
- node('master') {
-    
-}
-        
+  agent any      
 
   stages {
 
