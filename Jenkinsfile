@@ -1,15 +1,12 @@
 #!/usr/bin/env groovy
 pipeline {
 
-  agent {
-        node {
-            label 'master'
-            }
-    environment {
-        TERRAFORM_CMD = 'docker run --network host " -w /app -v ${HOME}/.aws:/root/.aws -v ${HOME}/.ssh:/root/.ssh -v `pwd`:/app hashicorp/terraform:light'
-                }
-  
-        }
+  agent any
+
+  environment {
+    #SVC_ACCOUNT_KEY = credentials('SP_terratest')
+  }
+
   stages {
 
     stage('Checkout') {
@@ -18,45 +15,36 @@ pipeline {
   sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
          }
         checkout scm
-        
+        #sh 'mkdir -p creds' 
+        #sh 'echo $SVC_ACCOUNT_KEY'
       }
-	  }
-      stage('pull latest light terraform image') {
-            steps {
-                sh  """
-                    docker pull hashicorp/terraform:light
-                    """
-            }
     }
 
-    stage('init') {
-            steps {
-                sh  """
-                    ${TERRAFORM_CMD} init -backend=true -input=false
-                    """
-            }
-        }
-        stage('plan') {
-            steps {{
-                sh  """
-                    ${TERRAFORM_CMD} plan -out=tfplan -input=false 
-                    """
-                script {
-                  timeout(time: 10, unit: 'MINUTES') {
-                    input(id: "Deploy Gate", message: "Deploy ${params.project_name}?", ok: 'Deploy')
-                  }
-                }
-                    }      
-                      }
+    stage('TF Plan') {
+      steps {
+       #container('terraform') {
+          sh 'terraform init'
+          sh 'terraform plan -out myplan'
+        #}
+      }      
+    }
 
-                       }
-        
-        stage('apply') {
-            steps {
-                sh  """
-                    ${TERRAFORM_CMD} apply -lock=false -input=false tfplan
-                    """
-                 }
-                       }
-}
+    stage('Approval') {
+      steps {
+        script {
+          def userInput = input(id: 'confirm', message: 'Apply Terraform?', parameters: [ [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm'] ])
+        }
+      }
+    }
+
+    stage('TF Apply') {
+      steps {
+        container('terraform') {
+          sh 'terraform apply -input=false myplan'
+        }
+      }
+    }
+
+  } 
+
 }
