@@ -1,9 +1,19 @@
 #!/usr/bin/env groovy
 pipeline {
 
-  agent any      
+     agent {
+        docker { 
+            image 'hashicorp/terraform:light' 
+            args '-it --entrypoint=/bin/bash'
+            label 'support_ubuntu_docker'
+        }   
 
   stages {
+    stage('Testversionofterraform') {
+            steps {
+                sh 'terraform --version'
+            }
+        }
 
     stage('Checkout') {
       steps {
