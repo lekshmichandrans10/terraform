@@ -6,7 +6,8 @@ pipeline {
             image 'hashicorp/terraform:light' 
             args '-it --entrypoint=/bin/bash'
             label 'support_ubuntu_docker'
-        }   
+        } 
+     }
 
   stages {
     stage('Testversionofterraform') {
