@@ -3,20 +3,19 @@ pipeline {
 
   agent any
 
- node {
-        withCredentials([azureServicePrincipal(credentialsId: 'SP_terratest',
-                    subscriptionIdVariable: 'SUBS_ID',
-                    clientIdVariable: 'CLIENT_ID',
-                    clientSecretVariable: 'CLIENT_SECRET',
-                    tenantIdVariable: 'TENANT_ID')])
-        }
+ 
+        
 
   stages {
 
     stage('Checkout') {
       steps {
-        
-        checkout scm
+        withCredentials([azureServicePrincipal(credentialsId: 'SP_terratest',
+                    subscriptionIdVariable: 'SUBS_ID',
+                    clientIdVariable: 'CLIENT_ID',
+                    clientSecretVariable: 'CLIENT_SECRET',
+                    tenantIdVariable: 'TENANT_ID')])
+     checkout scm
         
       }
     }
