@@ -9,9 +9,11 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        withCredentials([azureServicePrincipal('SP_terratest')]) {
-  sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-         }
+        withCredentials([azureServicePrincipal(credentialsId: 'SP_terratest',
+                    subscriptionIdVariable: 'SUBS_ID',
+                    clientIdVariable: 'CLIENT_ID',
+                    clientSecretVariable: 'CLIENT_SECRET',
+                    tenantIdVariable: 'TENANT_ID')])
         checkout scm
         
       }
