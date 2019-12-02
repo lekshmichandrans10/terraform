@@ -3,9 +3,7 @@ pipeline {
 
   agent any
 
-  environment {
-    #SVC_ACCOUNT_KEY = credentials('SP_terratest')
-  }
+ 
 
   stages {
 
@@ -15,17 +13,16 @@ pipeline {
   sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
          }
         checkout scm
-        #sh 'mkdir -p creds' 
-        #sh 'echo $SVC_ACCOUNT_KEY'
+        
       }
     }
 
     stage('TF Plan') {
       steps {
-       #container('terraform') {
+       
           sh 'terraform init'
           sh 'terraform plan -out myplan'
-        #}
+        
       }      
     }
 
