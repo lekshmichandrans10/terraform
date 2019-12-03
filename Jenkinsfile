@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Testversionofterraform') {
             steps {
-                sh 'terraform --version'
+                sh "terraform --version"
             }
         }
 
@@ -23,8 +23,8 @@ pipeline {
        stage('TF Plan') {
        steps {
           withCredentials([azureServicePrincipal('SP_terratest')])
-           sh 'terraform init'
-           sh 'terraform plan -out myplan'
+           sh "terraform init"
+           sh "terraform plan -out myplan"
          
        }
      }
@@ -40,7 +40,7 @@ pipeline {
     stage('TF Apply') {
       steps {
         
-          sh 'terraform apply -input=false myplan'
+          sh "terraform apply -input=false myplan"
         
       }
     }
