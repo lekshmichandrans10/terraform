@@ -22,7 +22,7 @@ pipeline {
 
        stage('TF Plan') {
        steps {
-         
+          withCredentials([azureServicePrincipal('SP_terratest')])
            sh 'terraform init'
            sh 'terraform plan -out myplan'
          
