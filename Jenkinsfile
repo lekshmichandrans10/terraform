@@ -19,7 +19,8 @@ pipeline {
       }
     }
 
-    stage('TF Plan') {
+   {
+       stage('TF Plan') {
        steps {
          
            sh 'terraform init'
@@ -27,7 +28,7 @@ pipeline {
          
        }
      }
-
+   }
     stage('Approval') {
       steps {
         script {
