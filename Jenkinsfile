@@ -19,7 +19,7 @@ pipeline {
       }
     }
 
-   {
+
        stage('TF Plan') {
        steps {
          
@@ -28,7 +28,7 @@ pipeline {
          
        }
      }
-   }
+
     stage('Approval') {
       steps {
         script {
